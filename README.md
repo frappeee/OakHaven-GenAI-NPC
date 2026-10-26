@@ -125,7 +125,7 @@ genai-npc-project/
 
 #### 1. Clone the Repository
 ```bash
-git clone https://github.com/YourUsername/genai-npc-project.git
+git clone https://github.com/frappeee/OakHaven-GenAI-NPC.git
 cd genai-npc-project
 ```
 
