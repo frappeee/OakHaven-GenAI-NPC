@@ -56,3 +56,17 @@ public class WorldStateVariables
     public int playerLevel = 1;
     public bool bossDefeated = false;
 }
+
+[Serializable]
+public class WorldFact
+{
+    public string id;
+    public List<string> tags = new List<string>();
+    public string content;
+}
+
+[Serializable]
+public class WorldFactsData
+{
+    public List<WorldFact> worldFacts = new List<WorldFact>();
+}

@@ -1,0 +1,1 @@
+use agentic AI and add npc persona for each(blacksmith, baker, etc)

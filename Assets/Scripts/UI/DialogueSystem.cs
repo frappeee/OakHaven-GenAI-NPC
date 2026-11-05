@@ -54,15 +54,15 @@ public class DialogueSystem : MonoBehaviour
         }
 
         StopTypewriter();
-        dialoguePanel.SetActive(true);
-        npcNameText.text = npcName;
+        if (dialoguePanel != null) dialoguePanel.SetActive(true);
+        if (npcNameText != null) npcNameText.text = npcName;
         if (portraitImage != null)
         {
             portraitImage.sprite = portrait;
             portraitImage.gameObject.SetActive(portrait != null);
         }
-        dialogueText.text = "";
-        thinkingIndicator.SetActive(true);
+        if (dialogueText != null) dialogueText.text = "";
+        if (thinkingIndicator != null) thinkingIndicator.SetActive(true);
     }
 
     public void DisplayResponse(string text)
@@ -72,7 +72,7 @@ public class DialogueSystem : MonoBehaviour
             gameObject.SetActive(true);
         }
 
-        thinkingIndicator.SetActive(false);
+        if (thinkingIndicator != null) thinkingIndicator.SetActive(false);
         StopTypewriter();
         typewriterCoroutine = StartCoroutine(StreamText(text));
     }
@@ -80,15 +80,15 @@ public class DialogueSystem : MonoBehaviour
     public void ShowFallback(string fallbackMessage = "Forgive me, adventurer. My mind is elsewhere... (Connection timeout)")
     {
         StopTypewriter();
-        thinkingIndicator.SetActive(false);
-        dialogueText.text = fallbackMessage;
+        if (thinkingIndicator != null) thinkingIndicator.SetActive(false);
+        if (dialogueText != null) dialogueText.text = fallbackMessage;
     }
 
     public void Hide()
     {
         StopTypewriter();
-        dialoguePanel.SetActive(false);
-        dialogueText.text = "";
+        if (dialoguePanel != null) dialoguePanel.SetActive(false);
+        if (dialogueText != null) dialogueText.text = "";
     }
 
     private void StopTypewriter()
@@ -102,7 +102,7 @@ public class DialogueSystem : MonoBehaviour
 
     private IEnumerator StreamText(string text)
     {
-        dialogueText.text = "";
+        if (dialogueText != null) dialogueText.text = "";
         if (string.IsNullOrEmpty(text))
         {
             typewriterCoroutine = null;
@@ -111,7 +111,7 @@ public class DialogueSystem : MonoBehaviour
 
         foreach (char c in text.ToCharArray())
         {
-            dialogueText.text += c;
+            if (dialogueText != null) dialogueText.text += c;
             yield return new WaitForSeconds(textScrollSpeed);
         }
 

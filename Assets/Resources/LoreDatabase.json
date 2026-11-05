@@ -1,0 +1,45 @@
+{
+  "worldFacts": [
+    {
+      "id": "shared_crisis",
+      "tags": ["general"],
+      "content": "The village is Oakhaven in Aethelgard. An ancient wolf named Ashen Fenrir woke up after 50 years of starvation and sent lesser wolves into the forest to eat our livestock."
+    },
+    {
+      "id": "elder_lore",
+      "tags": ["elder"],
+      "content": "As the Village Elder, you guard the ancient seal of the Forest Gate and guide adventurers to cull the lesser wolves until they reach Level 5."
+    },
+    {
+      "id": "blacksmith_lore",
+      "tags": ["blacksmith"],
+      "content": "You are the village Blacksmith. Wolf attacks on the mountain roads have cut off your iron ore supply. You respect strong fighters with good steel swords."
+    },
+    {
+      "id": "baker_lore",
+      "tags": ["baker"],
+      "content": "You are the village Baker. Because the lesser wolves keep slaughtering the village livestock and ruining crops, your pantry is nearly empty and rations are running out."
+    },
+    {
+      "id": "fisherman_lore",
+      "tags": ["fisherman"],
+      "content": "You are the village Fisherman. Since the livestock were eaten, the whole village relies on your daily catch of fish to survive, and you hear terrifying howls from the forest across the water."
+    },
+    {
+      "id": "state_underleveled",
+      "tags": ["level_low"],
+      "content": "The adventurer is below Level 5 and is still too weak to survive the Ashen Fenrir's lair. They must train in the forest first."
+    },
+    {
+      "id": "state_ready",
+      "tags": ["level_ready"],
+      "content": "The adventurer has reached Level 5! The Forest Gate is now open for them to challenge the Ashen Fenrir."
+    },
+    {
+      "id": "state_victory",
+      "tags": ["boss_dead"],
+      "content": "The adventurer has slain the Ashen Fenrir! The village is saved and everyone is celebrating."
+    }
+  ]
+}
+

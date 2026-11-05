@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(CircleCollider2D))]
@@ -6,30 +7,32 @@ public class NPCController : MonoBehaviour
 {
     [Header("NPC Persona (UC-04)")]
     [SerializeField] private string npcName = "Village Elder";
-    [SerializeField] private string npcRole = "weary leader of Oakhaven who watches over the villagers and worries about the starving wolf Ashen Fenrir";
-    [SerializeField] private Sprite npcPortrait;
-    [SerializeField] private string defaultPrompt = "Greet your fellow villager and speak about the crisis facing Oakhaven.";
+    [SerializeField] private string npcRole = "weary leader of Oakhaven";
+    
+    [Tooltip("Tags to retrieve from LoreDatabase.json (e.g., 'general', 'elder', 'blacksmith', 'baker', 'fisherman')")]
+    [SerializeField] private List<string> npcKnowledgeTags = new List<string> { "general", "elder" };
+
+    [Header("Conversation Memory (Gambar 3.6)")]
+    [SerializeField] private string lastNPCResponse = ""; // Optional per-NPC memory
 
     private bool isPlayerInRange = false;
     private bool isGenerating = false;
-    private bool isDialogueOpenForThisNPC = false;
     private int lastInteractFrame = -1;
     private PlayerController nearbyPlayer;
     private PlayerController lockedPlayer;
 
     private void Awake()
     {
-        // Ensure the CircleCollider2D acts as an interaction trigger zone
-        CircleCollider2D triggerZone = GetComponent<CircleCollider2D>();
-        triggerZone.isTrigger = true;
+        CircleCollider2D circle = GetComponent<CircleCollider2D>();
+        if (circle != null)
+        {
+            circle.isTrigger = true;
+        }
     }
 
     private void Update()
     {
-        if (!isPlayerInRange && !isDialogueOpenForThisNPC) return;
-
-        // Trigger interaction or close dialogue when pressing 'E'
-        if (Input.GetKeyDown(KeyCode.E) && !isGenerating)
+        if (isPlayerInRange && Input.GetKeyDown(KeyCode.E) && !isGenerating)
         {
             OnInteractKeyPressed();
         }
@@ -37,7 +40,8 @@ public class NPCController : MonoBehaviour
 
     public void OnInteractKeyPressed()
     {
-        // Prevent double-triggering on the same frame and ignore input while generating
+        // Guard against double invocation in the same frame (e.g., from both PlayerController and NPCController)
+        // or input while Ollama generation is active
         if (isGenerating || lastInteractFrame == Time.frameCount) return;
         lastInteractFrame = Time.frameCount;
 
@@ -47,83 +51,66 @@ public class NPCController : MonoBehaviour
             return;
         }
 
-        // Step 8 of UC-03: If dialogue is already open and finished generating, close it and unlock player
+        // If dialogue is currently open and finished generating, close it and unlock the player
         if (DialogueSystem.Instance.IsActive)
         {
-            if (isDialogueOpenForThisNPC)
-            {
-                CloseDialogue();
-            }
+            CloseDialogue();
             return;
         }
 
-        if (ContextInjector.Instance == null || OllamaAPIClient.Instance == null)
-        {
-            Debug.LogError("[NPCController] ContextInjector or OllamaAPIClient instance is missing in the scene.");
-            return;
-        }
-
-        if (OllamaAPIClient.Instance.IsBusy)
-        {
-            return;
-        }
-
-        // Step 1-5 of UC-03: Start new AI dialogue interaction
         StartCoroutine(StartInteraction());
     }
 
     private IEnumerator StartInteraction()
     {
         isGenerating = true;
-        isDialogueOpenForThisNPC = true;
 
-        // Step 2 of UC-03: Lock player movement
         if (nearbyPlayer != null)
         {
             lockedPlayer = nearbyPlayer;
             lockedPlayer.SetMovementLock(true);
         }
 
-        // Step 3 of UC-03: Show UI Dialogue Box & Thinking Indicator
-        DialogueSystem.Instance.ShowThinking(npcName, npcPortrait);
+        DialogueSystem.Instance.ShowThinking(npcName);
 
-        // Step 4 of UC-03: Assemble Context Injection Payload (UC-04)
+        // Fallback check for ContextInjector and OllamaAPIClient
+        if (ContextInjector.Instance == null || OllamaAPIClient.Instance == null)
+        {
+            Debug.LogError("[NPCController] ContextInjector or OllamaAPIClient is missing from the scene.");
+            DialogueSystem.Instance.ShowFallback("Error: System middleware missing.");
+            CloseDialogue();
+            yield break;
+        }
+
+        // Pass this specific NPC's name, role, and knowledge tags to ContextInjector
         PromptPayload payload = ContextInjector.Instance.AssemblePayload(
             npcName,
             npcRole,
-            defaultPrompt
+            npcKnowledgeTags,
+            "Greet the adventurer from your perspective and speak about the current situation."
         );
 
-        // Step 5 & 6 of UC-03: Send HTTP POST to Local Ollama Server
         yield return StartCoroutine(OllamaAPIClient.Instance.PostAsync(
             payload,
             onComplete: (response, tps) =>
             {
-                // Step 7 of UC-03: Display generated response
-                OnResponseReceived(response);
+                lastNPCResponse = !string.IsNullOrEmpty(response) ? response.Trim() : "...";
+                DialogueSystem.Instance.DisplayResponse(lastNPCResponse);
+                isGenerating = false;
             },
             onTimeout: () =>
             {
-                // Exception E-1 of UC-03: 5-second timeout fallback
-                DialogueSystem.Instance.ShowFallback("Forgive me... my thoughts are clouded right now.");
+                DialogueSystem.Instance.ShowFallback("Maaf, aku sedang sibuk... (Server Timeout)");
                 isGenerating = false;
             }
         ));
 
-        // Failsafe in case PostAsync exited early
-        isGenerating = false;
-    }
-
-    public void OnResponseReceived(string responseText)
-    {
-        string cleanedResponse = string.IsNullOrWhiteSpace(responseText) ? "..." : responseText.Trim();
-        DialogueSystem.Instance.DisplayResponse(cleanedResponse);
+        // Failsafe in case PostAsync exited early (e.g. client was busy)
         isGenerating = false;
     }
 
     private void CloseDialogue()
     {
-        isDialogueOpenForThisNPC = false;
         isGenerating = false;
 
         if (DialogueSystem.Instance != null)
@@ -149,9 +136,13 @@ public class NPCController : MonoBehaviour
 
     private void OnDisable()
     {
-        if (isDialogueOpenForThisNPC)
+        if (DialogueSystem.Instance != null && DialogueSystem.Instance.IsActive)
         {
             CloseDialogue();
+        }
+        else
+        {
+            UnlockPlayer();
         }
     }
 
@@ -163,7 +154,6 @@ public class NPCController : MonoBehaviour
             isPlayerInRange = true;
             nearbyPlayer = player;
             player.SetNearbyNPC(this);
-            Debug.Log($"[NPCController] Player entered range of {npcName}. Press 'E' to talk.");
         }
     }
 
@@ -173,8 +163,8 @@ public class NPCController : MonoBehaviour
         if (player != null && player == nearbyPlayer)
         {
             isPlayerInRange = false;
-            nearbyPlayer = null;
             player.ClearNearbyNPC(this);
+            nearbyPlayer = null;
         }
     }
 }

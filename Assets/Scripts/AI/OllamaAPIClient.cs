@@ -12,15 +12,33 @@ public class OllamaAPIClient : MonoBehaviour
     [SerializeField] private float coldStartTimeoutSeconds = 15f;
     [SerializeField] private string modelName = "llama3.2:1b";
 
-    public static OllamaAPIClient Instance { get; private set; }
+    private static OllamaAPIClient instance;
+    public static OllamaAPIClient Instance
+    {
+        get
+        {
+            if (instance == null)
+            {
+                instance = FindObjectOfType<OllamaAPIClient>();
+            }
+            return instance;
+        }
+        private set => instance = value;
+    }
     public bool IsBusy { get; private set; }
 
     private bool isModelWarm = false;
 
     private void Awake()
     {
-        if (Instance == null) Instance = this;
-        else Destroy(gameObject);
+        if (instance == null || instance == this)
+        {
+            instance = this;
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
     }
 
     public IEnumerator PostAsync(PromptPayload payload, Action<string, float> onComplete, Action onTimeout)
