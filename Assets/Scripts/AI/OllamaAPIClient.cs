@@ -91,7 +91,8 @@ public class OllamaAPIClient : MonoBehaviour
                 APIResponse responseData = ParseResponse(request.downloadHandler.text);
                 float tps = responseData != null ? responseData.GetTPS() : 0f;
                 Debug.Log($"[Ollama] Generation Complete. TPS: {tps:F2} | Latency: {(Time.realtimeSinceStartup - startTime):F2}s");
-                string replyText = !string.IsNullOrEmpty(responseData?.response) ? responseData.response : "...";
+                string replyText = responseData != null ? responseData.GetTextResponse() : "...";
+                if (string.IsNullOrEmpty(replyText)) replyText = "...";
                 onComplete?.Invoke(replyText, tps);
             }
         }

@@ -21,6 +21,7 @@ public class PromptPayload
     public string model = "llama3.2:1b";
     public string prompt;
     public string system;
+    public List<Message> messages = new List<Message>();
     public bool stream = false;
 
     public string ToJson()
@@ -30,13 +31,28 @@ public class PromptPayload
 }
 
 [Serializable]
+public class ChatMessageResponse
+{
+    public string role;
+    public string content;
+}
+
+[Serializable]
 public class APIResponse
 {
-    public string response;
+    public string response; // For Ollama /api/generate
+    public ChatMessageResponse message; // For Ollama /api/chat
     public bool done;
     public int eval_count;
     public long eval_duration;
     public long total_duration;
+
+    public string GetTextResponse()
+    {
+        if (!string.IsNullOrEmpty(response)) return response;
+        if (message != null && !string.IsNullOrEmpty(message.content)) return message.content;
+        return "";
+    }
 
     // Calculates Tokens Per Second (TPS) for your thesis performance evaluation (Bab 1.5.1 / Bab 3)
     public float GetTPS()

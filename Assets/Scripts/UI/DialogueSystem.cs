@@ -5,12 +5,14 @@ using UnityEngine.UI;
 
 public class DialogueSystem : MonoBehaviour
 {
+#pragma warning disable 0649
     [Header("UI References")]
     [SerializeField] private GameObject dialoguePanel;
     [SerializeField] private Image portraitImage;
     [SerializeField] private TextMeshProUGUI npcNameText;
     [SerializeField] private TextMeshProUGUI dialogueText;
     [SerializeField] private GameObject thinkingIndicator;
+#pragma warning restore 0649
 
     [Header("Dialogue Settings")]
     [SerializeField] private float textScrollSpeed = 0.03f;

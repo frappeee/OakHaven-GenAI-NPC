@@ -12,8 +12,12 @@ public class NPCController : MonoBehaviour
     [Tooltip("Tags to retrieve from LoreDatabase.json (e.g., 'general', 'elder', 'blacksmith', 'baker', 'fisherman')")]
     [SerializeField] private List<string> npcKnowledgeTags = new List<string> { "general", "elder" };
 
-    [Header("Conversation Memory (Gambar 3.6)")]
-    [SerializeField] private string lastNPCResponse = ""; // Optional per-NPC memory
+    [Header("Conversation Memory & Multi-Turn (Gambar 3.6)")]
+    [SerializeField] private ConversationHistory conversationHistory = new ConversationHistory();
+    [SerializeField] private string lastNPCResponse = "";
+    [Tooltip("If enabled, the NPC will ask the player a question to trigger a multi-turn interaction")]
+    [SerializeField] private bool asksQuestionToPlayer = false;
+    [SerializeField] private string questionPrompt = "Ask the adventurer what weapon style or approach they prefer against the wolves.";
 
     private bool isPlayerInRange = false;
     private bool isGenerating = false;
@@ -82,12 +86,18 @@ public class NPCController : MonoBehaviour
             yield break;
         }
 
+        // Determine prompt based on whether NPC asks a question or greets
+        string promptToSend = asksQuestionToPlayer
+            ? questionPrompt
+            : "Greet the adventurer from your perspective and speak about the current situation.";
+
         // Pass this specific NPC's name, role, and knowledge tags to ContextInjector
         PromptPayload payload = ContextInjector.Instance.AssemblePayload(
             npcName,
             npcRole,
             npcKnowledgeTags,
-            "Greet the adventurer from your perspective and speak about the current situation."
+            promptToSend,
+            conversationHistory
         );
 
         yield return StartCoroutine(OllamaAPIClient.Instance.PostAsync(
@@ -95,6 +105,7 @@ public class NPCController : MonoBehaviour
             onComplete: (response, tps) =>
             {
                 lastNPCResponse = !string.IsNullOrEmpty(response) ? response.Trim() : "...";
+                conversationHistory.Append("assistant", lastNPCResponse);
                 DialogueSystem.Instance.DisplayResponse(lastNPCResponse);
                 isGenerating = false;
             },
@@ -106,6 +117,50 @@ public class NPCController : MonoBehaviour
         ));
 
         // Failsafe in case PostAsync exited early (e.g. client was busy)
+        isGenerating = false;
+    }
+
+    /// <summary>
+    /// Multi-turn questioning handler: allows player to reply to the NPC question.
+    /// Used for advisor's requested interactive feature and Gambar 3.6 ConversationHistory.
+    /// </summary>
+    public void SubmitPlayerReply(string playerReply)
+    {
+        if (isGenerating || string.IsNullOrWhiteSpace(playerReply)) return;
+        StartCoroutine(ProcessPlayerReply(playerReply));
+    }
+
+    private IEnumerator ProcessPlayerReply(string playerReply)
+    {
+        isGenerating = true;
+        conversationHistory.Append("user", playerReply.Trim());
+
+        DialogueSystem.Instance.ShowThinking(npcName);
+
+        PromptPayload payload = ContextInjector.Instance.AssemblePayload(
+            npcName,
+            npcRole,
+            npcKnowledgeTags,
+            "The adventurer answered your question. Respond in-character in 1 or 2 concise sentences acknowledging their answer.",
+            conversationHistory
+        );
+
+        yield return StartCoroutine(OllamaAPIClient.Instance.PostAsync(
+            payload,
+            onComplete: (response, tps) =>
+            {
+                lastNPCResponse = !string.IsNullOrEmpty(response) ? response.Trim() : "...";
+                conversationHistory.Append("assistant", lastNPCResponse);
+                DialogueSystem.Instance.DisplayResponse(lastNPCResponse);
+                isGenerating = false;
+            },
+            onTimeout: () =>
+            {
+                DialogueSystem.Instance.ShowFallback("Maaf, aku sedang sibuk... (Server Timeout)");
+                isGenerating = false;
+            }
+        ));
+
         isGenerating = false;
     }
 

@@ -193,19 +193,37 @@ public class ContextInjector : MonoBehaviour
                "7. Keep responses concise and relevant to your role and the current crisis.";
     }
 
-    public PromptPayload AssemblePayload(string npcName, string npcRole, List<string> npcKnowledgeTags, string playerGreeting)
+    public PromptPayload AssemblePayload(string npcName, string npcRole, List<string> npcKnowledgeTags, string playerGreeting, ConversationHistory history = null)
     {
         PromptPayload payload = new PromptPayload();
-        payload.system = BuildSystemPrompt(npcName, npcRole, npcKnowledgeTags);
+        string baseSystem = BuildSystemPrompt(npcName, npcRole, npcKnowledgeTags);
+
+        if (history != null && history.turns != null && history.turns.Count > 0)
+        {
+            baseSystem += "\n\nRecent Conversation with Adventurer:\n" + history.ToContextString();
+        }
+
+        payload.system = baseSystem;
         payload.prompt = string.IsNullOrEmpty(playerGreeting)
             ? "Greet the adventurer from your perspective and speak about the current situation."
             : playerGreeting;
         return payload;
     }
 
+    /// <summary>
+    /// Helper to enforce memory constraints for Gambar 3.6
+    /// </summary>
+    public void TrimHistory(ConversationHistory history, int max = 4)
+    {
+        if (history != null)
+        {
+            history.TrimHistory(max);
+        }
+    }
+
     // Overload for backward compatibility
     public PromptPayload AssemblePayload(string npcName, string npcRole, string playerGreeting)
     {
-        return AssemblePayload(npcName, npcRole, new List<string> { "general" }, playerGreeting);
+        return AssemblePayload(npcName, npcRole, new List<string> { "general" }, playerGreeting, null);
     }
 }
