@@ -1,9 +1,7 @@
 using UnityEngine;
 
-/// <summary>
-/// Implements Scene 3: The Forest Gate / Level Check (GDD & Gambar 3.1 Flowchart).
-/// Prevents the player from entering the Boss Arena until Level 5 is reached.
-/// </summary>
+/// Implementation for Scene 3 or The Forest Gate/Level Check (GDD & Gambar 3.1 Flowchart)
+/// Preventing the player from entering the boss arena until level 5
 [RequireComponent(typeof(Collider2D))]
 public class LevelGate : MonoBehaviour
 {

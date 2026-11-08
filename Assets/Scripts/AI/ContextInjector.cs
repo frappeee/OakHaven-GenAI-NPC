@@ -46,7 +46,6 @@ public class ContextInjector : MonoBehaviour
         {
             string json = "";
 
-            // 1. Try StreamingAssets (LoreDatabase.json, then worldFacts.json)
             string streamingPath = Path.Combine(Application.streamingAssetsPath, "LoreDatabase.json");
             if (File.Exists(streamingPath))
             {
@@ -60,8 +59,8 @@ public class ContextInjector : MonoBehaviour
                     json = File.ReadAllText(altStreamingPath);
                 }
             }
-
-            // 2. Fallback to Resources
+            
+            // fallback
             if (string.IsNullOrEmpty(json))
             {
                 TextAsset asset = Resources.Load<TextAsset>("LoreDatabase");
@@ -98,9 +97,7 @@ public class ContextInjector : MonoBehaviour
         worldState.bossDefeated = defeated;
     }
 
-    /// <summary>
-    /// Builds the system prompt injecting both general and role-specific lore chunks based on knowledge tags and current game state.
-    /// </summary>
+    /// Builds the system prompt injecting both general and role specific lore based on knowledge tags and current game state
     public string BuildSystemPrompt(string npcName, string npcRole, List<string> knowledgeTags = null)
     {
         if (loreDatabase == null || loreDatabase.worldFacts == null || loreDatabase.worldFacts.Count == 0)
@@ -108,7 +105,7 @@ public class ContextInjector : MonoBehaviour
             LoadLoreDatabase();
         }
 
-        // Determine current progression state tag
+        // determines the current progression state tag
         string stateTag;
         if (worldState.bossDefeated)
         {
@@ -141,7 +138,7 @@ public class ContextInjector : MonoBehaviour
             }
         }
 
-        // Retrieve matching facts from the database
+        // gets matching facts from the lore database
         List<string> retrievedChunks = new List<string>();
         if (loreDatabase != null && loreDatabase.worldFacts != null)
         {
@@ -161,7 +158,7 @@ public class ContextInjector : MonoBehaviour
             }
         }
 
-        // Build lore section from retrieved chunks or fallback
+        // builds lore section from the retrived chunks or the fallback
         string loreSection;
         if (retrievedChunks.Count > 0)
         {
@@ -179,7 +176,7 @@ public class ContextInjector : MonoBehaviour
                           $"Current Situation: {fallbackProgress}";
         }
 
-        // Injection template enforcing consistency and conciseness (GDD Section 3.3.2.2 & UC-04)
+        // injection template for concistensies (GDD Section 3.3.2.2 & UC-04)
         return $"You are {npcName}, the {npcRole} in the village of {worldState.villageName}.\n" +
                $"{loreSection}\n" +
                $"Current Situation: The person talking to you is an adventurer currently at Level {worldState.playerLevel} raised in {worldState.villageName}. You know them as a fellow villager, not a stranger.\n" +
@@ -210,9 +207,7 @@ public class ContextInjector : MonoBehaviour
         return payload;
     }
 
-    /// <summary>
-    /// Helper to enforce memory constraints for Gambar 3.6
-    /// </summary>
+    /// a helper function for enforcing the memory constraints for Gambar 3.6
     public void TrimHistory(ConversationHistory history, int max = 4)
     {
         if (history != null)

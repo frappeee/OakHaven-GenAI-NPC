@@ -40,8 +40,8 @@ public class ChatMessageResponse
 [Serializable]
 public class APIResponse
 {
-    public string response; // For Ollama /api/generate
-    public ChatMessageResponse message; // For Ollama /api/chat
+    public string response; //for Ollama /api/generate
+    public ChatMessageResponse message; // for Ollama /api/chat
     public bool done;
     public int eval_count;
     public long eval_duration;
@@ -54,7 +54,7 @@ public class APIResponse
         return "";
     }
 
-    // Calculates Tokens Per Second (TPS) for your thesis performance evaluation (Bab 1.5.1 / Bab 3)
+    // calculated the Tokens per Second(TPS) (Bab 1.5.1 / Bab 3)
     public float GetTPS()
     {
         if (eval_duration <= 0) return 0f;

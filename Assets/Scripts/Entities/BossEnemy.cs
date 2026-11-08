@@ -1,9 +1,7 @@
 using UnityEngine;
 
-/// <summary>
 /// Boss Enemy class based on Class Diagram Gambar 3.5.
 /// Represents Ashen Fenrir with a two-phase fight and victory triggers.
-/// </summary>
 public class BossEnemy : EnemyController
 {
     [Header("Boss Specific Settings (Gambar 3.5)")]

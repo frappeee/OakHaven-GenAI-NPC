@@ -6,32 +6,55 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     [Header("Movement Settings")]
-    [SerializeField] private float moveSpeed = 4f;
+    [SerializeField]
+    private float moveSpeed = 4f;
     private bool isMovementLocked = false;
 
     [Header("Interaction Settings")]
-    [SerializeField] private KeyCode interactKey = KeyCode.E;
+    [SerializeField]
+    private KeyCode interactKey = KeyCode.E;
     private NPCController nearbyNPC;
 
     [Header("Player Stats (Gambar 3.5 & GDD Section 3.3.2.3)")]
-    [SerializeField] private int maxHP = 100;
-    [SerializeField] private int currentHP;
-    [SerializeField] private int level = 1;
-    [SerializeField] private int experience = 0;
-    [SerializeField] private float attackDamage = 25f;
+    [SerializeField]
+    private int maxHP = 100;
+
+    [SerializeField]
+    private int currentHP;
+
+    [SerializeField]
+    private int level = 1;
+
+    [SerializeField]
+    private int experience = 0;
+
+    [SerializeField]
+    private float attackDamage = 25f;
 
     [Header("Combat Settings")]
-    [SerializeField] private float attackCooldown = 0.35f;
-    [SerializeField] private float attackRange = 0.8f;
-    [SerializeField] private Transform attackPoint = null;
-    [SerializeField] private LayerMask enemyLayers = default;
+    [SerializeField]
+    private float attackCooldown = 0.35f;
+
+    [SerializeField]
+    private float attackRange = 0.8f;
+
+    [SerializeField]
+    private Transform attackPoint = null;
+
+    [SerializeField]
+    private LayerMask enemyLayers = default;
     private float lastAttackTime = -99f;
     private bool isDead = false;
 
     [Header("Level Up Feedback (GDD Section 3.3.2.3)")]
-    [SerializeField] private ParticleSystem levelUpParticle = null;
-    [SerializeField] private AudioSource audioSource = null;
-    [SerializeField] private AudioClip levelUpAudio = null;
+    [SerializeField]
+    private ParticleSystem levelUpParticle = null;
+
+    [SerializeField]
+    private AudioSource audioSource = null;
+
+    [SerializeField]
+    private AudioClip levelUpAudio = null;
 
     public int MaxHP => maxHP;
     public int CurrentHP => currentHP;
@@ -60,11 +83,12 @@ public class PlayerController : MonoBehaviour
 
         currentHP = maxHP;
 
-        // Auto-find attackPoint if child exists and not assigned in inspector
+        // auto finds attackPoint if child exists and not assigned in inspector
         if (attackPoint == null)
         {
             Transform foundPoint = transform.Find("AttackPoint");
-            if (foundPoint != null) attackPoint = foundPoint;
+            if (foundPoint != null)
+                attackPoint = foundPoint;
         }
 
         if (audioSource == null)
@@ -84,6 +108,10 @@ public class PlayerController : MonoBehaviour
         {
             GameManager.Instance.SetPlayerLevel(level);
         }
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.BindPlayer(this);
+        }
 
         OnHealthChanged?.Invoke(currentHP, maxHP);
         OnExpChanged?.Invoke(experience, ExpToNextLevel);
@@ -91,7 +119,8 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
-        if (isDead) return;
+        if (isDead)
+            return;
 
         // NPC Interaction Trigger
         if (Input.GetKeyDown(interactKey) && nearbyNPC != null)
@@ -100,7 +129,11 @@ public class PlayerController : MonoBehaviour
         }
 
         // Combat Swing (Left Mouse Click per GDD Section 3.3.2.3)
-        if (Input.GetMouseButtonDown(0) && !isMovementLocked && Time.time >= lastAttackTime + attackCooldown)
+        if (
+            Input.GetMouseButtonDown(0)
+            && !isMovementLocked
+            && Time.time >= lastAttackTime + attackCooldown
+        )
         {
             Attack();
         }
@@ -156,14 +189,16 @@ public class PlayerController : MonoBehaviour
         animator.SetTrigger("Attack");
 
         // Determine center of attack hitbox
-        Vector2 attackOrigin = attackPoint != null
-            ? (Vector2)attackPoint.position
-            : (Vector2)transform.position + (lastFacingDirection * 0.6f);
+        Vector2 attackOrigin =
+            attackPoint != null
+                ? (Vector2)attackPoint.position
+                : (Vector2)transform.position + (lastFacingDirection * 0.6f);
 
         // Detect all enemies within attack range
-        Collider2D[] hits = enemyLayers != 0
-            ? Physics2D.OverlapCircleAll(attackOrigin, attackRange, enemyLayers)
-            : Physics2D.OverlapCircleAll(attackOrigin, attackRange);
+        Collider2D[] hits =
+            enemyLayers != 0
+                ? Physics2D.OverlapCircleAll(attackOrigin, attackRange, enemyLayers)
+                : Physics2D.OverlapCircleAll(attackOrigin, attackRange);
 
         foreach (Collider2D hit in hits)
         {
@@ -181,11 +216,17 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     public void TakeDamage(int amount)
     {
-        if (isDead) return;
+        if (isDead)
+            return;
 
         currentHP = Mathf.Max(0, currentHP - amount);
         Debug.Log($"[PlayerController] Took {amount} damage. Current HP: {currentHP}/{maxHP}");
         OnHealthChanged?.Invoke(currentHP, maxHP);
+
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.UpdateHealth(currentHP, maxHP);
+        }
 
         if (currentHP <= 0)
         {
@@ -198,7 +239,8 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     public void GainExp(int amount)
     {
-        if (isDead) return;
+        if (isDead)
+            return;
 
         experience += amount;
         Debug.Log($"[PlayerController] Gained {amount} EXP. Total: {experience}/{ExpToNextLevel}");
@@ -209,6 +251,11 @@ public class PlayerController : MonoBehaviour
         }
 
         OnExpChanged?.Invoke(experience, ExpToNextLevel);
+
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.UpdateExperience(experience, ExpToNextLevel);
+        }
     }
 
     /// <summary>
@@ -222,7 +269,9 @@ public class PlayerController : MonoBehaviour
         currentHP = maxHP; // Full heal upon level up
         attackDamage += 10f; // Attacks become visibly stronger
 
-        Debug.Log($"[PlayerController] LEVEL UP! Now Level {level}! Max HP: {maxHP}, Attack: {attackDamage}");
+        Debug.Log(
+            $"[PlayerController] LEVEL UP! Now Level {level}! Max HP: {maxHP}, Attack: {attackDamage}"
+        );
 
         // Feedback: Bright particle effect & audio chime (GDD Section 3.3.2.3)
         if (levelUpParticle != null)
@@ -246,11 +295,19 @@ public class PlayerController : MonoBehaviour
 
         OnHealthChanged?.Invoke(currentHP, maxHP);
         OnLevelUpEvent?.Invoke(level);
+
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.UpdateHealth(currentHP, maxHP);
+            UIManager.Instance.UpdateLevel(level);
+            UIManager.Instance.UpdateExperience(experience, ExpToNextLevel);
+        }
     }
 
     public void Die()
     {
-        if (isDead) return;
+        if (isDead)
+            return;
         isDead = true;
 
         Debug.LogWarning("[PlayerController] Player has died!");
@@ -269,8 +326,10 @@ public class PlayerController : MonoBehaviour
         if (locked)
         {
             moveInput = Vector2.zero;
-            if (rb != null) rb.velocity = Vector2.zero;
-            if (animator != null) animator.SetFloat("Speed", 0f);
+            if (rb != null)
+                rb.velocity = Vector2.zero;
+            if (animator != null)
+                animator.SetFloat("Speed", 0f);
         }
     }
 
@@ -307,9 +366,10 @@ public class PlayerController : MonoBehaviour
 
     private void OnDrawGizmosSelected()
     {
-        Vector2 origin = attackPoint != null
-            ? (Vector2)attackPoint.position
-            : (Vector2)transform.position + (lastFacingDirection * 0.6f);
+        Vector2 origin =
+            attackPoint != null
+                ? (Vector2)attackPoint.position
+                : (Vector2)transform.position + (lastFacingDirection * 0.6f);
 
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(origin, attackRange);

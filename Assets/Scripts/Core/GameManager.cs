@@ -10,10 +10,8 @@ public enum GameState
     Victory
 }
 
-/// <summary>
-/// Core Game Manager based on Class Diagram Gambar 3.5.
-/// Tracks current scene, player level, level-based gating, and global game state.
-/// </summary>
+/// This is the core Game Manager based on Class Diagram Gambar 3.5
+/// which will track the current scene, player level, level-based gating and global game state
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
@@ -71,9 +69,7 @@ public class GameManager : MonoBehaviour
         OnPlayerLevelChanged?.Invoke(playerLevel);
     }
 
-    /// <summary>
-    /// Checks whether the player meets the Level 5 gate requirement (GDD Section 3.3.3 & Gambar 3.5).
-    /// </summary>
+    /// checks whether the player meets the Level 5 gate requirement (GDD Section 3.3.3 & Gambar 3.5).
     public bool CheckLevelGate()
     {
         if (playerLevel >= REQUIRED_LEVEL_FOR_BOSS)
