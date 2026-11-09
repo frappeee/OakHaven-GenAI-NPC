@@ -111,7 +111,7 @@ public class NPCController : MonoBehaviour
             },
             onTimeout: () =>
             {
-                DialogueSystem.Instance.ShowFallback("Maaf, aku sedang sibuk... (Server Timeout)");
+                DialogueSystem.Instance.ShowFallback("Sorry. I'm Busy (Server Timeout)");
                 isGenerating = false;
             }
         ));
@@ -156,7 +156,7 @@ public class NPCController : MonoBehaviour
             },
             onTimeout: () =>
             {
-                DialogueSystem.Instance.ShowFallback("Maaf, aku sedang sibuk... (Server Timeout)");
+                DialogueSystem.Instance.ShowFallback("Sorry, I'm Busy (Server Timeout)");
                 isGenerating = false;
             }
         ));

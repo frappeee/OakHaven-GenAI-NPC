@@ -44,41 +44,16 @@ public class ContextInjector : MonoBehaviour
     {
         try
         {
-            string json = "";
-
             string streamingPath = Path.Combine(Application.streamingAssetsPath, "LoreDatabase.json");
             if (File.Exists(streamingPath))
             {
-                json = File.ReadAllText(streamingPath);
-            }
-            else
-            {
-                string altStreamingPath = Path.Combine(Application.streamingAssetsPath, "worldFacts.json");
-                if (File.Exists(altStreamingPath))
-                {
-                    json = File.ReadAllText(altStreamingPath);
-                }
-            }
-            
-            // fallback
-            if (string.IsNullOrEmpty(json))
-            {
-                TextAsset asset = Resources.Load<TextAsset>("LoreDatabase");
-                if (asset == null) asset = Resources.Load<TextAsset>("worldFacts");
-                if (asset != null)
-                {
-                    json = asset.text;
-                }
-            }
-
-            if (!string.IsNullOrEmpty(json))
-            {
+                string json = File.ReadAllText(streamingPath);
                 loreDatabase = JsonUtility.FromJson<WorldFactsData>(json);
                 Debug.Log($"[ContextInjector] Loaded {loreDatabase?.worldFacts?.Count ?? 0} world facts from lore database.");
             }
             else
             {
-                Debug.LogWarning("[ContextInjector] Lore database JSON not found in StreamingAssets or Resources. Using fallback lore.");
+                Debug.LogWarning($"[ContextInjector] Lore database JSON not found at: {streamingPath}. Using fallback lore.");
             }
         }
         catch (Exception ex)
