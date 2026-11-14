@@ -132,7 +132,7 @@ cd genai-npc-project
 #### 2. Start the Local LLM Server
 Ensure Ollama is running and pull the optimized 1B model:
 ```bash
-ollama run llama3.2:1b
+ollama run llama3.2:1b-instruct-q4_K_M
 ```
 *(Alternatively, execute `local-llm-server/start_server.bat`)*
 

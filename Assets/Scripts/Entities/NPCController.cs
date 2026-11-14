@@ -21,7 +21,8 @@ public class NPCController : MonoBehaviour
 
     private bool isPlayerInRange = false;
     private bool isGenerating = false;
-    private int lastInteractFrame = -1;
+    private static int lastGlobalInteractFrame = -1;
+    private static NPCController activeDialogueNPC = null;
     private PlayerController nearbyPlayer;
     private PlayerController lockedPlayer;
 
@@ -36,7 +37,21 @@ public class NPCController : MonoBehaviour
 
     private void Update()
     {
-        if (isPlayerInRange && Input.GetKeyDown(KeyCode.E) && !isGenerating)
+        if (isGenerating) return;
+
+        bool dialogueOpen = DialogueSystem.Instance != null && DialogueSystem.Instance.IsActive;
+
+        // Allow closing an active dialogue with E or Escape even if multiple NPCs overlap
+        if (dialogueOpen && (activeDialogueNPC == this || activeDialogueNPC == null))
+        {
+            if (Input.GetKeyDown(KeyCode.E) || Input.GetKeyDown(KeyCode.Escape))
+            {
+                OnInteractKeyPressed();
+                return;
+            }
+        }
+
+        if (!dialogueOpen && isPlayerInRange && Input.GetKeyDown(KeyCode.E))
         {
             OnInteractKeyPressed();
         }
@@ -44,10 +59,10 @@ public class NPCController : MonoBehaviour
 
     public void OnInteractKeyPressed()
     {
-        // Guard against double invocation in the same frame (e.g., from both PlayerController and NPCController)
-        // or input while Ollama generation is active
-        if (isGenerating || lastInteractFrame == Time.frameCount) return;
-        lastInteractFrame = Time.frameCount;
+        // Static frame guard prevents another overlapping NPC (or PlayerController + NPCController)
+        // from closing and immediately re-opening dialogue in the same frame.
+        if (isGenerating || lastGlobalInteractFrame == Time.frameCount) return;
+        lastGlobalInteractFrame = Time.frameCount;
 
         if (DialogueSystem.Instance == null)
         {
@@ -58,10 +73,18 @@ public class NPCController : MonoBehaviour
         // If dialogue is currently open and finished generating, close it and unlock the player
         if (DialogueSystem.Instance.IsActive)
         {
-            CloseDialogue();
+            if (activeDialogueNPC != null && activeDialogueNPC != this)
+            {
+                activeDialogueNPC.CloseDialogue();
+            }
+            else
+            {
+                CloseDialogue();
+            }
             return;
         }
 
+        activeDialogueNPC = this;
         StartCoroutine(StartInteraction());
     }
 
@@ -167,6 +190,10 @@ public class NPCController : MonoBehaviour
     private void CloseDialogue()
     {
         isGenerating = false;
+        if (activeDialogueNPC == this)
+        {
+            activeDialogueNPC = null;
+        }
 
         if (DialogueSystem.Instance != null)
         {
@@ -186,6 +213,14 @@ public class NPCController : MonoBehaviour
         else if (nearbyPlayer != null)
         {
             nearbyPlayer.SetMovementLock(false);
+        }
+        else
+        {
+            PlayerController player = FindObjectOfType<PlayerController>();
+            if (player != null)
+            {
+                player.SetMovementLock(false);
+            }
         }
     }
 

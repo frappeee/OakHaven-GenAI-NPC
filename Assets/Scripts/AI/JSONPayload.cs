@@ -18,7 +18,7 @@ public class Message
 [Serializable]
 public class PromptPayload
 {
-    public string model = "llama3.2:1b";
+    public string model = "llama3.2:1b-instruct-q4_K_M";
     public string prompt;
     public string system;
     public List<Message> messages = new List<Message>();
@@ -85,4 +85,17 @@ public class WorldFact
 public class WorldFactsData
 {
     public List<WorldFact> worldFacts = new List<WorldFact>();
+}
+
+[Serializable]
+public class OllamaModelEntry
+{
+    public string name;
+    public string model;
+}
+
+[Serializable]
+public class OllamaTagsList
+{
+    public List<OllamaModelEntry> models = new List<OllamaModelEntry>();
 }

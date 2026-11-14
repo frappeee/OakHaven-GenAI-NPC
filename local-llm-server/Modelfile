@@ -1,4 +1,4 @@
-FROM llama3.2:1b
+FROM llama3.2:1b-instruct-q4_K_M
 
 # Memory and speed optimizations for Integrated Graphics (16GB shared RAM)
 PARAMETER num_ctx 1024
